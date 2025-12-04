@@ -19,7 +19,8 @@ Type=simple
 WorkingDirectory=$CWD
 User=$USER
 Restart=on-failure
-StartLimitIntervalSec=30
+StartLimitInterval=30
+StartLimitBurst=5
 ExecStart=$CWD/venv/bin/python3 $CWD/postIpToSlack.py
 Environment="PATH=$CWD/venv/bin:$PATH"
 Environment="VIRTUAL_ENV=$CWD/venv"
