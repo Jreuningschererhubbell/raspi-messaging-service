@@ -9,9 +9,6 @@ python3 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
 
-# Create the enironment variable file
-cat <<EOL > .env
-
 # Create a systemd service file to run the script on boot
 cat <<EOL > messagePoster.service
 [Unit]
