@@ -1,0 +1,10 @@
+{
+    "logs": {
+        "level": "DEBUG",
+        "log_directory": "."
+    },
+    "check_interval": 900,
+    "repost_interval": 864000,
+    "interfaces_of_interest": ["wlan0", "eth0"],
+    "force": false
+}

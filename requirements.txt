@@ -1,0 +1,10 @@
+certifi==2025.10.5
+charset-normalizer==3.4.3
+DateTime==5.5
+idna==3.10
+loguru==0.7.3
+netifaces==0.11.0
+pytz==2025.2
+requests==2.32.5
+urllib3==2.5.0
+zope.interface==8.0.1
