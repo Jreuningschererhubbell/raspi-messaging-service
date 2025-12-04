@@ -13,14 +13,14 @@ pip install -r requirements.txt
 cat <<EOL > messagePoster.service
 [Unit]
 Description=Post IP addresses to Slack
+StartLimitIntervalSec=30
+StartLimitBurst=5
 
 [Service]
 Type=simple
 WorkingDirectory=$CWD
 User=$USER
 Restart=on-failure
-StartLimitInterval=30
-StartLimitBurst=5
 ExecStart=$CWD/venv/bin/python3 $CWD/postIpToSlack.py
 Environment="PATH=$CWD/venv/bin:$PATH"
 Environment="VIRTUAL_ENV=$CWD/venv"
