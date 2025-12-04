@@ -32,7 +32,7 @@ EOL
 
 # Move the service file to systemd directory and enable it
 echo "Setting up systemd service"
-sudo mv messagePoster.service /etc/systemd/system/messagePoster.service
+sudo cp messagePoster.service /etc/systemd/system/messagePoster.service
 sudo systemctl daemon-reload
 sudo systemctl enable messagePoster.service
 sudo systemctl start messagePoster.service
