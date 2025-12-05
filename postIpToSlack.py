@@ -140,6 +140,7 @@ def main():
             service_config_check_interval = service_config.get("check_interval", 3600)
             service_config_repost_interval = service_config.get("repost_interval", -1)
             service_config_force = service_config.get("force", False)
+            service_config_ip_store_file = service_config.get("ip_store_file", "ip_store.json")
             # Process the interfaces of interest. 
             ioi = service_config.get('interfaces_of_interest', "all")
 
@@ -159,12 +160,17 @@ def main():
             logger.add(f"{service_config_log_directory}/ip_poster_{{time:YYYY-MM-DD}}.log", level=service_config_log_level, rotation="sunday", retention=4)
 
             logger.debug("===== Starting new run of IP Poster =====")
-            logger.debug(f"SETTINGS: \n\tLog Level: {service_config_log_level}\n\tLog Directory: {service_config_log_directory}\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}")
+            logger.debug(f"SETTINGS: \n\tLog Level: {service_config_log_level}\n\tLog Directory: {service_config_log_directory}\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}\n\tIP Store File: {service_config_ip_store_file}")
     except FileNotFoundError:
         raise Exception("The service_config.json file was not found. Please ensure it exists in the script's directory.")
 
-    ip_store = IpStore()
-    ip_store.load()
+    ip_store = IpStore(store_file=service_config_ip_store_file)
+    if not ip_store.load():
+        logger.info("No existing IP store found, initializing new store.")
+        ip_store.hostname = socket.gethostname()
+        ip_store.interfaces_of_interest = service_config_interfaces_of_interest
+        ip_store.update_ips()
+        ip_store.store()
 
     # If the interfaces of interest have changed, update them and send message immediately
     if ip_store.interfaces_of_interest != service_config_interfaces_of_interest:

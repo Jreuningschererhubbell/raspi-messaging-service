@@ -6,5 +6,6 @@
     "check_interval": 900,
     "repost_interval": 864000,
     "interfaces_of_interest": ["wlan0", "eth0"],
-    "force": false
+    "force": false,
+    "ip_store_file": "ip_store.json"
 }
