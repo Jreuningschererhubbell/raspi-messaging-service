@@ -95,9 +95,9 @@ def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpSt
 
     while True:
         hostname_changes = (ip_store.hostname != socket.gethostname())
-            if hostname_changes:
-                message_lines.append(f"Hostname changed detected: {ip_store.hostname} -> {socket.gethostname()}")
-                ip_store.hostname = socket.gethostname()
+        if hostname_changes:
+            message_lines.append(f"Hostname changed detected: {ip_store.hostname} -> {socket.gethostname()}")
+            ip_store.hostname = socket.gethostname()
 
         ip_changes = ip_store.update_ips()
         any_change = any(ip_changes) or hostname_changes
