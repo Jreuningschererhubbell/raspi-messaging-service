@@ -91,15 +91,21 @@ class IpStore:
 def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
 
     last_post_time = datetime.min
+    message_lines = []
 
     while True:
+        hostname_changes = (ip_store.hostname != socket.gethostname())
+            if hostname_changes:
+                message_lines.append(f"Hostname changed detected: {ip_store.hostname} -> {socket.gethostname()}")
+                ip_store.hostname = socket.gethostname()
+
         ip_changes = ip_store.update_ips()
-        any_change = any(ip_changes)
+        any_change = any(ip_changes) or hostname_changes
 
         time_since_last_post = (datetime.now() - last_post_time).total_seconds()
 
         if any_change or (repost_interval > 0 and time_since_last_post >= repost_interval) or force_send:
-            message_lines = [f"IP Address Update for {ip_store.hostname}:"]
+            message_lines.append(f"IP Address Update for {ip_store.hostname}:")
             for ip_info in ip_store.ips:
                 message_lines.append(f"- {ip_info['name']}: {ip_info['addr']}")
             message = "\n".join(message_lines)
