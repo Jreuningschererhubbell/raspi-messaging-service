@@ -3,7 +3,7 @@ import json
 import socket
 import netifaces
 from loguru import logger
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import argparse
 import SlackMessenger
@@ -112,7 +112,7 @@ def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpSt
 
             if slack_messenger.post_message(message):
                 ip_store.store()
-                last_post_time = datetime.now()
+                last_post_time = datetime.now(datetime.timezone.utc)
             else:
                 logger.error("Failed to post IP update to Slack.")
 
