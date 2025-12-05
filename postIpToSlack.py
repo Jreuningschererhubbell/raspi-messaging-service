@@ -112,7 +112,7 @@ def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpSt
 
             if slack_messenger.post_message(message):
                 ip_store.store()
-                last_post_time = datetime.now(datetime.timezone.utc)
+                last_post_time = datetime.now()
             else:
                 logger.error("Failed to post IP update to Slack.")
 
@@ -160,7 +160,7 @@ def main():
             logger.add(f"{service_config_log_directory}/ip_poster_{{time:YYYY-MM-DD}}.log", level=service_config_log_level, rotation="sunday", retention=4)
 
             logger.debug("===== Starting new run of IP Poster =====")
-            logger.debug(f"+++SETTINGS+++Log Level: {service_config_log_level}\n\tLog Directory: {service_config_log_directory}\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}\n\tIP Store File: {service_config_ip_store_file}")
+            logger.debug("+++SETTINGS+++")
             logger.debug(f"\tLog Level: {service_config_log_level}")
             logger.debug(f"\tLog Directory: {service_config_log_directory}")
             logger.debug(f"\tRepost Interval: {service_config_repost_interval}")
