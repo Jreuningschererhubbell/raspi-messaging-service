@@ -60,7 +60,11 @@ class IpStore:
         ip_changes = []
         for iface in self.interfaces_of_interest:
             if iface in netifaces.interfaces():
-                addr = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+                ifaddrs = netifaces.ifaddresses(iface)
+                # By default, assume no address is found
+                addr = "None"
+                if netifaces.AF_INET in ifaddrs.keys():
+                    addr = ifaddrs[netifaces.AF_INET][0]['addr']
                 current_ips.append({'name': iface, 'addr': addr})
 
                 # Check for changes
