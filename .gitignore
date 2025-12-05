@@ -1,1 +1,9 @@
 secrets.json
+ip_store.json
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+messagePoster.service
+logs/
+*.log
