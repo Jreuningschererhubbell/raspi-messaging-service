@@ -10,6 +10,28 @@ fi
 # Get the current working directory
 CWD=$(pwd)
 
+### Configuration Check ###
+# Check for service_config.json file
+if [ ! -f "$CWD/service_config.json" ]; then
+    echo "Configuration file service_config.json not found!"
+    echo "Please create service_config.json based on service_config_template.json and fill in the required details."
+    exit 1
+else
+    echo "Configuration file service_config.json found."
+fi
+
+# Check for secrets.json file
+if [ ! -f "$CWD/secrets.json" ]; then
+    echo "Secrets file secrets.json not found!"
+    echo "Please create secrets.json based on secrets_template.json and fill in the required secrets."
+    exit 1
+else
+    echo "Secrets file secrets.json found."
+fi
+
+
+### Python Virtual Environment Setup ###
+
 # See if the virtual environment already exists
 if [ -d "$CWD/venv" ]; then
     echo "Virtual environment already exists. Skipping environment creation."
@@ -23,6 +45,8 @@ fi
 echo "Activating virtual environment and installing required packages."
 . ./venv/bin/activate
 pip install -r requirements.txt
+
+
 
 # Create a systemd service file to run the script on boot
 cat <<EOL > messagePoster.service
