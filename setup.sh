@@ -1,11 +1,26 @@
 #! /bin/bash
 
+# See if a full reinstall has been requested
+if [ "$1" == "--full-reinstall" ]; then
+    echo "Performing full reinstall: removing existing virtual environment and service file."
+    rm -rf venv
+fi
+
+
 # Get the current working directory
 CWD=$(pwd)
 
-# Create python virtual environment
-echo "Setting up Python virtual environment in $CWD/venv"
-python3 -m venv venv
+# See if the virtual environment already exists
+if [ -d "$CWD/venv" ]; then
+    echo "Virtual environment already exists. Skipping environment creation."
+else 
+    # Create python virtual environment
+    echo "Setting up Python virtual environment in $CWD/venv"
+    python3 -m venv venv
+fi
+
+# Activate the virtual environment and install required packages
+echo "Activating virtual environment and installing required packages."
 . ./venv/bin/activate
 pip install -r requirements.txt
 
@@ -13,6 +28,7 @@ pip install -r requirements.txt
 cat <<EOL > messagePoster.service
 [Unit]
 Description=Post IP addresses to Slack
+Wants=multi-user.target
 StartLimitIntervalSec=30
 StartLimitBurst=5
 
@@ -24,16 +40,26 @@ Restart=on-failure
 ExecStart=$CWD/venv/bin/python3 $CWD/postIpToSlack.py
 Environment="PATH=$CWD/venv/bin:$PATH"
 Environment="VIRTUAL_ENV=$CWD/venv"
-
-[Install]
-WantedBy=multi-user.target
+RestartSec=10
 EOL
 
-# Move the service file to systemd directory and enable it
-echo "Setting up systemd service"
-sudo cp messagePoster.service /etc/systemd/system/messagePoster.service
+
+### Systemd Service Setup ###
+
+# If service file already exists, inform user and remove
+if [ -f /etc/systemd/system/messagePoster.service ]; then
+    echo "Existing messagePoster service file found. Removing it..."
+    sudo rm /etc/systemd/system/messagePoster.service
+fi  
+
+# Copy the new service file to systemd directory
+echo "Copying new messagePoster service file..."
+sudo cp "$CWD/messagePoster.service" /etc/systemd/system/messagePoster.service
+
+# Reload systemd to recognize the new service file
+echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
-sudo systemctl enable messagePoster.service
-sudo systemctl start messagePoster.service
+
+sudo systemctl enable --now messagePoster.service
 
 echo "Setup complete. The messagePoster service is now running."
