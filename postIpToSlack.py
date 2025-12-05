@@ -160,7 +160,14 @@ def main():
             logger.add(f"{service_config_log_directory}/ip_poster_{{time:YYYY-MM-DD}}.log", level=service_config_log_level, rotation="sunday", retention=4)
 
             logger.debug("===== Starting new run of IP Poster =====")
-            logger.debug(f"SETTINGS: \n\tLog Level: {service_config_log_level}\n\tLog Directory: {service_config_log_directory}\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}\n\tIP Store File: {service_config_ip_store_file}")
+            logger.debug(f"+++SETTINGS+++Log Level: {service_config_log_level}\n\tLog Directory: {service_config_log_directory}\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}\n\tIP Store File: {service_config_ip_store_file}")
+            logger.debug(f"\tLog Level: {service_config_log_level}")
+            logger.debug(f"\tLog Directory: {service_config_log_directory}")\n\tCheck Interval: {service_config_check_interval}\n\tRepost Interval: {service_config_repost_interval}\n\tInterfaces of Interest: {service_config_interfaces_of_interest}\n\tForce: {service_config_force}\n\tIP Store File: {service_config_ip_store_file}")
+            logger.debug(f"\tCheck Interval: {service_config_check_interval}")
+            logger.debug(f"\tRepost Interval: {service_config_repost_interval}")
+            logger.debug(f"\tInterfaces of Interest: {service_config_interfaces_of_interest}")
+            logger.debug(f"\tForce: {service_config_force}")
+            logger.debug(f"\tIP Store File: {service_config_ip_store_file}")
     except FileNotFoundError:
         raise Exception("The service_config.json file was not found. Please ensure it exists in the script's directory.")
 
