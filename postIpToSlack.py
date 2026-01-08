@@ -91,9 +91,9 @@ class IpStore:
 def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
 
     last_post_time = datetime.min
-    message_lines = []
-
+    
     while True:
+        message_lines = []
         hostname_changes = (ip_store.hostname != socket.gethostname())
         if hostname_changes:
             message_lines.append(f"Hostname changed detected: {ip_store.hostname} -> {socket.gethostname()}")
@@ -168,6 +168,7 @@ def main():
             logger.debug(f"\tForce: {service_config_force}")
             logger.debug(f"\tIP Store File: {service_config_ip_store_file}")
     except FileNotFoundError:
+        logger.error("The service_config.json file was not found.")
         raise Exception("The service_config.json file was not found. Please ensure it exists in the script's directory.")
 
     ip_store = IpStore(store_file=service_config_ip_store_file)
