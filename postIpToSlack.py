@@ -76,12 +76,15 @@ class IpStore:
                     # If we have not seen this interface before, then assume it has changed
                     if self.adapters.get(iface) is None:
                         adapter_changes.append(True)
+                        logger.debug(f"New interface detected: {iface}")
                     # If there is a stored value for this interface, compare it to the current value
                     else:
                         if self.adapters[iface] == adapter:
                             adapter_changes.append(True)
+                            logger.debug(f"No change detected for interface: {iface}")
                         else:
                             adapter_changes.append(False)
+                            logger.debug(f"Change detected for interface: {iface}")
                     
                     # Update the stored adapter 
                     self.adapters[iface] = adapter
