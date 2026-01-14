@@ -2,16 +2,18 @@ import json
 from loguru import logger
 import requests
 
-class SlackMessenger:
+import ServiceMessenger
+
+class SlackMessenger(ServiceMessenger.ServiceMessenger):
     def __init__(self, device_name: str, secrets_file: str = "secrets.json"):
+        super().__init__(device_name)
+        self.service_name = "slack"
         try:
             with open(secrets_file, "r") as f:
                 secrets = json.load(f)
                 self.slack_webhook_url = secrets.get("slack_webhook_url", "")
         except FileNotFoundError:
             raise Exception("The secrets.json file was not found. Please ensure it exists.")
-        
-        self.name = device_name
 
     def post_message(self, message):
         if not self.slack_webhook_url:
@@ -19,7 +21,7 @@ class SlackMessenger:
             return False
 
         payload = {
-            "host": self.name,
+            "host": self.device_name,
             "msg": message
         }
 

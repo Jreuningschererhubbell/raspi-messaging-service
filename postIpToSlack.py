@@ -6,7 +6,9 @@ from loguru import logger
 from datetime import datetime, timezone
 import time
 import argparse
+import ServiceMessenger
 import SlackMessenger
+import DiscordMessenger
 
 import jsonpickle
 
@@ -126,7 +128,7 @@ def adapters_equal(adapter1: ifaddr.Adapter, adapter2: ifaddr.Adapter, check_ind
         return False
     return True
 
-def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
+def ip_check_loop(messengers: ServiceMessenger.ServiceMessengerGroup, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
 
     last_post_time = datetime.min
     
@@ -148,11 +150,19 @@ def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpSt
                 message_lines.append(f"- {ip_info['name']}: {ip_info['addr']}")
             message = "\n".join(message_lines)
 
-            if slack_messenger.post_message(message):
+            messenger_results = messengers.post_message(message)
+            if messenger_results and all(messenger_results.values()):
                 ip_store.store()
                 last_post_time = datetime.now()
+                logger.info("Posted IP update to all services successfully.")
+            elif messenger_results and any(not result for result in messenger_results.values()):
+                ip_store.store()
+                last_post_time = datetime.now()
+                logger.error("Failed to post IP update to one or more services.")
             else:
-                logger.error("Failed to post IP update to Slack.")
+                logger.error("Failed to post IP update to any services.")
+
+
 
         time.sleep(check_interval)
 
@@ -179,6 +189,7 @@ def main():
             service_config_repost_interval = service_config.get("repost_interval", -1)
             service_config_force = service_config.get("force", False)
             service_config_ip_store_file = service_config.get("ip_store_file", "ip_store.json")
+            service_config_services = service_config.get("services", ["slack"])
             # Process the interfaces of interest. 
             ioi = service_config.get('interfaces_of_interest', "all")
 
@@ -205,6 +216,7 @@ def main():
             logger.debug(f"\tInterfaces of Interest: {service_config_interfaces_of_interest}")
             logger.debug(f"\tForce: {service_config_force}")
             logger.debug(f"\tIP Store File: {service_config_ip_store_file}")
+            logger.debug(f"\tServices: {service_config_services}")
     except FileNotFoundError:
         logger.error("The service_config.json file was not found.")
         raise Exception("The service_config.json file was not found. Please ensure it exists in the script's directory.")
@@ -225,11 +237,16 @@ def main():
 
     hostname = socket.gethostname()
 
-    # Create the Slack messenger
-    slack_messenger = SlackMessenger.SlackMessenger(device_name=hostname, secrets_file=args.secrets)
+    # Create appropriate messenger based on config
+    messengers = ServiceMessenger.ServiceMessengerGroup()
+    if "slack" in service_config_services:
+        slack_messenger = SlackMessenger.SlackMessenger(device_name=hostname, secrets_file=args.secrets)
+        messengers.add_messenger(slack_messenger)
+    if "discord" in service_config_services:
+        discord_messenger = DiscordMessenger.DiscordMessenger(device_name=hostname, secrets_file=args.secrets)
+        messengers.add_messenger(discord_messenger)
 
-    ip_check_loop(slack_messenger, ip_store, service_config_check_interval, service_config_repost_interval, service_config_force or args.force)
-
+    ip_check_loop(messengers, ip_store, service_config_check_interval, service_config_repost_interval, service_config_force or args.force)
 
 
 
