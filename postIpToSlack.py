@@ -60,22 +60,20 @@ class IpStore:
         ip_changes = []
         for iface in self.interfaces_of_interest:
             for adapter in ifaddr.get_adapters():
-
-                if adapter.nice_name == iface:
+                if adapter.name == iface:
                     ifaddrs = adapter.ips
                     # By default, assume no address is found
-                    addr = "None"
-                    protocol = "None"
                     for ip in ifaddrs:
+                        addr = "None"
+                        protocol = "None"
                         if ip.is_IPv4:
-                            addr = ip.ip
+                            addr = f"{ip.ip}/{ip.network_prefix}"
                             protocol = "IPv4"
-                            break
-                        elif ip.is_IPv6 and addr == "None":
-                            addr = ip.ip
+                        elif ip.is_IPv6:
+                            addr = f"{ip.ip}/{ip.network_prefix}"
                             protocol = "IPv6"
-                    logger.debug(f"Found address for interface {iface}: {addr} ({protocol})")
-                    current_ips.append({'name': iface, 'addr': addr, 'protocol': protocol})
+                        logger.debug(f"Found address for interface {iface}: {addr} ({protocol})")
+                        current_ips.append({'name': iface, 'addr': addr, 'protocol': protocol})
 
                     # Check for changes
                     # See if this interface was previously stored
@@ -155,7 +153,7 @@ def main():
 
             if isinstance(ioi, str):
                 if ioi == "all":
-                    service_config_interfaces_of_interest = netifaces.interfaces()
+                    service_config_interfaces_of_interest = [adapter.name for adapter in ifaddr.get_adapters()]
                 else:
                     logger.warning(f"Treating interfaces_of_interest value '{ioi}' as interface name")
                     service_config_interfaces_of_interest = [ioi]
