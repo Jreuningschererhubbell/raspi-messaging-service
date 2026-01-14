@@ -8,6 +8,8 @@ import time
 import argparse
 import SlackMessenger
 
+import jsonpickle
+
 PAST_IP_STORE_FILE = "ip_store.json"
 
 
@@ -18,6 +20,7 @@ class IpStore:
         self.hostname = None
         self.interfaces_of_interest = []
         self.ips = []
+        self.adapters: dict[str, ifaddr.Adapter] = {}
         self.load()
 
     def load(self) -> bool:
@@ -29,6 +32,13 @@ class IpStore:
                 self.hostname = data.get('hostname', None)
                 self.interfaces_of_interest = data.get('interfaces_of_interest', [])
                 self.ips = data.get('ips', [])
+                adapters_json = data.get('adapters', "")
+                adapter_loaded = jsonpickle.decode(adapters_json)
+                # Make sure the type is correct
+                if isinstance(adapter_loaded, dict):
+                    self.adapters = adapter_loaded
+                else:
+                    self.adapters = {}
             return True
         except FileNotFoundError:
             logger.error(f"Could not find {self.store_file}")
@@ -45,7 +55,8 @@ class IpStore:
                     'last_updated': str(datetime.now()),
                     'hostname': self.hostname,
                     'interfaces_of_interest': self.interfaces_of_interest,
-                    'ips': self.ips
+                    'ips': self.ips,
+                    'adapters': jsonpickle.encode(self.adapters)
                 }
                 f.write(json.dumps(data))
             return True
@@ -58,9 +69,29 @@ class IpStore:
         '''Update the IPs for the interfaces of interest'''
         current_ips = []
         ip_changes = []
+        adapter_changes = []
         for iface in self.interfaces_of_interest:
+            iface_found = False
             for adapter in ifaddr.get_adapters():
-                if adapter.name == iface:
+                if adapter.name == iface or adapter.nice_name == iface:
+                    # If we have not seen this interface before, then assume it has changed
+                    if self.adapters.get(iface) is None:
+                        adapter_changes.append(True)
+                        logger.debug(f"New interface detected: {iface}")
+                    # If there is a stored value for this interface, compare it to the current value
+                    else:
+                        if adapters_equal(self.adapters[iface], adapter):
+                            adapter_changes.append(False)
+                            logger.debug(f"No change detected for interface: {iface}")
+                        else:
+                            adapter_changes.append(True)
+                            logger.debug(f"Change detected for interface: {iface}")
+
+                    iface_found = True
+                    # Update the stored adapter 
+                    self.adapters[iface] = adapter
+
+                    # Update the IP addresses in the store
                     ifaddrs = adapter.ips
                     # By default, assume no address is found
                     for ip in ifaddrs:
@@ -75,25 +106,25 @@ class IpStore:
                         logger.debug(f"Found address for interface {iface}: {addr} ({protocol})")
                         current_ips.append({'name': iface, 'addr': addr, 'protocol': protocol})
 
-                    # Check for changes
-                    # See if this interface was previously stored
-                    found = False
-                    for stored in self.ips:
-                        if stored['name'] == iface and stored['protocol'] == protocol:
-                            found = True
-                            if stored['addr'] != addr:
-                                ip_changes.append(True)
-                            else:
-                                ip_changes.append(False)
-                    if not found:
-                        ip_changes.append(True)  # New interface, consider as change
-                else:
-                    logger.warning(f"Interface {iface} not found.")
+            if not iface_found:
+                logger.warning(f"Interface {iface} not found.")
 
         self.ips = current_ips
-        return ip_changes
+        return adapter_changes
 
-
+def adapters_equal(adapter1: ifaddr.Adapter, adapter2: ifaddr.Adapter, check_index: bool = False) -> bool:
+    if adapter1.name != adapter2.name or adapter1.nice_name != adapter2.nice_name:
+        return False
+    if len(adapter1.ips) != len(adapter2.ips):
+        return False
+    for ip1, ip2 in zip(adapter1.ips, adapter2.ips):
+        if ip1.is_IPv4 != ip2.is_IPv4 or ip1.is_IPv6 != ip2.is_IPv6:
+            return False
+        if ip1.ip != ip2.ip or ip1.network_prefix != ip2.network_prefix or ip1.nice_name != ip2.nice_name:
+            return False
+    if check_index and adapter1.index != adapter2.index:
+        return False
+    return True
 
 def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
 
