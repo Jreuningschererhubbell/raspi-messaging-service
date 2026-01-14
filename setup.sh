@@ -31,9 +31,9 @@ fi
 
 # Check for service_config.json file
 if [ ! -f "$CWD/service_config.json" ]; then
-    echo "Configuration file service_config.json not found!"
-    echo "Please create service_config.json based on service_config_template.json and fill in the required details."
-    exit 1
+    echo "Configuration file service_config.json not found. Creating one from template."
+    cp "$CWD/service_config_template.json" "$CWD/service_config.json"
+    echo "Configuration file service_config.json created."
 else
     echo "Configuration file service_config.json found."
 fi
