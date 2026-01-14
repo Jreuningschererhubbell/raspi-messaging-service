@@ -11,11 +11,18 @@ fi
 CWD=$(pwd)
 
 ### Configuration Check ###
+
 # Check for service_config.json file
 if [ ! -f "$CWD/service_config.json" ]; then
-    echo "Configuration file service_config.json not found!"
-    echo "Please create service_config.json based on service_config_template.json and fill in the required details."
-    exit 1
+    read -p "Configuration file service_config.json not found! Would you like to create one now from the template? (y/n) " create_config
+    if [[ "$create_config" =~ ^[Yy]$ ]]; then
+        cp "$CWD/service_config_template.json" "$CWD/service_config.json"
+        echo "Created service_config.json from template. Please modify it as required, then rerun the setup script."
+        exit 1
+    else
+        echo "Please create service_config.json and fill in the required details."
+        exit 1
+    fi
 else
     echo "Configuration file service_config.json found."
 fi
@@ -29,14 +36,6 @@ else
     echo "Secrets file secrets.json found."
 fi
 
-# Check for service_config.json file
-if [ ! -f "$CWD/service_config.json" ]; then
-    echo "Configuration file service_config.json not found. Creating one from template."
-    cp "$CWD/service_config_template.json" "$CWD/service_config.json"
-    echo "Configuration file service_config.json created."
-else
-    echo "Configuration file service_config.json found."
-fi
 
 
 ### Python Virtual Environment Setup ###
