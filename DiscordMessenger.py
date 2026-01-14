@@ -2,16 +2,18 @@ import json
 from loguru import logger
 import requests
 
-class DiscordMessenger:
+import ServiceMessenger
+
+class DiscordMessenger(ServiceMessenger.ServiceMessenger):
     def __init__(self, device_name: str, secrets_file: str = "secrets.json"):
+        super().__init__(device_name)
+        self.service_name = "discord"
         try:
             with open(secrets_file, "r") as f:
                 secrets = json.load(f)
                 self.discord_webhook_url = secrets.get("discord_webhook_url", "")
         except FileNotFoundError:
             raise Exception("The secrets.json file was not found. Please ensure it exists.")
-        
-        self.name = device_name
 
     def post_message(self, message):
         if not self.discord_webhook_url:
@@ -19,7 +21,7 @@ class DiscordMessenger:
             return False
 
         payload = {
-            "content": self.name,
+            "content": f"{self.device_name}: {message}",
         }
 
         try:
