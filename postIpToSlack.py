@@ -1,7 +1,7 @@
 import os
 import json
 import socket
-import netifaces
+import ifaddr
 from loguru import logger
 from datetime import datetime, timezone
 import time
@@ -59,29 +59,38 @@ class IpStore:
         current_ips = []
         ip_changes = []
         for iface in self.interfaces_of_interest:
-            if iface in netifaces.interfaces():
-                ifaddrs = netifaces.ifaddresses(iface)
-                # By default, assume no address is found
-                addr = "None"
-                if netifaces.AF_INET in ifaddrs.keys():
-                    addr = ifaddrs[netifaces.AF_INET][0]['addr']
-                current_ips.append({'name': iface, 'addr': addr})
+            for adapter in ifaddr.get_adapters():
 
-                # Check for changes
-                # See if this interface was previously stored
-                found = False
-                for stored in self.ips:
-                    if stored['name'] == iface:
-                        found = True
-                        if stored['addr'] != addr:
-                            ip_changes.append(True)
-                        else:
-                            ip_changes.append(False)
-                        break
-                if not found:
-                    ip_changes.append(True)  # New interface, consider as change
-            else:
-                logger.warning(f"Interface {iface} not found.")
+                if adapter.nice_name == iface:
+                    ifaddrs = adapter.ips
+                    # By default, assume no address is found
+                    addr = "None"
+                    protocol = "None"
+                    for ip in ifaddrs:
+                        if ip.is_IPv4:
+                            addr = ip.ip
+                            protocol = "IPv4"
+                            break
+                        elif ip.is_IPv6 and addr == "None":
+                            addr = ip.ip
+                            protocol = "IPv6"
+                    logger.debug(f"Found address for interface {iface}: {addr} ({protocol})")
+                    current_ips.append({'name': iface, 'addr': addr, 'protocol': protocol})
+
+                    # Check for changes
+                    # See if this interface was previously stored
+                    found = False
+                    for stored in self.ips:
+                        if stored['name'] == iface and stored['protocol'] == protocol:
+                            found = True
+                            if stored['addr'] != addr:
+                                ip_changes.append(True)
+                            else:
+                                ip_changes.append(False)
+                    if not found:
+                        ip_changes.append(True)  # New interface, consider as change
+                else:
+                    logger.warning(f"Interface {iface} not found.")
 
         self.ips = current_ips
         return ip_changes
