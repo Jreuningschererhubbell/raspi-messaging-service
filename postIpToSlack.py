@@ -80,7 +80,7 @@ class IpStore:
                         logger.debug(f"New interface detected: {iface}")
                     # If there is a stored value for this interface, compare it to the current value
                     else:
-                        if self.adapters[iface] == adapter:
+                        if adapters_equal(self.adapters[iface], adapter):
                             adapter_changes.append(False)
                             logger.debug(f"No change detected for interface: {iface}")
                         else:
@@ -112,7 +112,19 @@ class IpStore:
         self.ips = current_ips
         return adapter_changes
 
-
+def adapters_equal(adapter1: ifaddr.Adapter, adapter2: ifaddr.Adapter, check_index: bool = False) -> bool:
+    if adapter1.name != adapter2.name or adapter1.nice_name != adapter2.nice_name:
+        return False
+    if len(adapter1.ips) != len(adapter2.ips):
+        return False
+    for ip1, ip2 in zip(adapter1.ips, adapter2.ips):
+        if ip1.is_IPv4 != ip2.is_IPv4 or ip1.is_IPv6 != ip2.is_IPv6:
+            return False
+        if ip1.ip != ip2.ip or ip1.network_prefix != ip2.network_prefix or ip1.nice_name != ip2.nice_name:
+            return False
+    if check_index and adapter1.index != adapter2.index:
+        return False
+    return True
 
 def ip_check_loop(slack_messenger: SlackMessenger.SlackMessenger, ip_store: IpStore, check_interval: int, repost_interval: int, force_send: bool):
 
