@@ -71,6 +71,7 @@ class IpStore:
         ip_changes = []
         adapter_changes = []
         for iface in self.interfaces_of_interest:
+            iface_found = False
             for adapter in ifaddr.get_adapters():
                 if adapter.name == iface or adapter.nice_name == iface:
                     # If we have not seen this interface before, then assume it has changed
@@ -80,12 +81,13 @@ class IpStore:
                     # If there is a stored value for this interface, compare it to the current value
                     else:
                         if self.adapters[iface] == adapter:
-                            adapter_changes.append(True)
+                            adapter_changes.append(False)
                             logger.debug(f"No change detected for interface: {iface}")
                         else:
-                            adapter_changes.append(False)
+                            adapter_changes.append(True)
                             logger.debug(f"Change detected for interface: {iface}")
-                    
+
+                    iface_found = True
                     # Update the stored adapter 
                     self.adapters[iface] = adapter
 
@@ -104,8 +106,8 @@ class IpStore:
                         logger.debug(f"Found address for interface {iface}: {addr} ({protocol})")
                         current_ips.append({'name': iface, 'addr': addr, 'protocol': protocol})
 
-                else:
-                    logger.warning(f"Interface {iface} not found.")
+            if not iface_found:
+                logger.warning(f"Interface {iface} not found.")
 
         self.ips = current_ips
         return adapter_changes
