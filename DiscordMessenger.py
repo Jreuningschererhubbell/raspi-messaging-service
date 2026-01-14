@@ -21,7 +21,7 @@ class DiscordMessenger(ServiceMessenger.ServiceMessenger):
             return False
 
         payload = {
-            "content": f"{self.device_name}: {message}",
+            "content": f"*Message from {self.device_name}*:\n{message}",
         }
 
         try:
