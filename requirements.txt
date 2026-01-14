@@ -8,3 +8,4 @@ requests==2.32.5
 urllib3==2.5.0
 zope.interface==8.0.1
 ifaddr==0.2.0
+jsonpickle==4.1.1
